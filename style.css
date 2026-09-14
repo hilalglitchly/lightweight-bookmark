@@ -1,10 +1,10 @@
 :root {
-    /* Skema warna Dark Mode yang nyaman di mata */
-    --bg-color: #1e1e2e;
-    --text-color: #cdd6f4;
-    --accent-color: #89b4fa;
-    --item-bg-hover: #313244;
-    --border-color: #45475a;
+    /* Skema warna Dark Mode khas Brave Browser */
+    --bg-color: #202124;
+    --text-color: #e8eaed;
+    --accent-color: #fb542b; /* Brave Orange */
+    --item-bg-hover: #3c4043;
+    --border-color: #5f6368;
 }
 
 body {
