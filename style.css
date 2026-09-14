@@ -77,7 +77,7 @@ li {
     gap: 10px;
 }
 
-li:hover {
+li:hover, li.selected {
     background-color: var(--item-bg-hover);
 }
 
