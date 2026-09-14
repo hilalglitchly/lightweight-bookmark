@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fungsi pembantu untuk merender array bookmark ke elemen HTML
     function renderList(bookmarks) {
+        const fragment = document.createDocumentFragment();
+        let addedCount = 0;
+
         bookmarks.forEach(bookmark => {
             // Pastikan yang dirender adalah link, bukan folder (folder tidak punya URL)
             if (bookmark.url) {
@@ -31,10 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Mengambil Favicon asli menggunakan API Chrome internal
                 const faviconUrl = `chrome-extension://${chrome.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(bookmark.url)}&size=16`;
 
-                li.innerHTML = `
-                    <img class="bookmark-icon" src="${faviconUrl}" alt="icon">
-                    <a href="${bookmark.url}" title="${bookmark.title}">${bookmark.title}</a>
-                `;
+                const img = document.createElement('img');
+                img.className = 'bookmark-icon';
+                img.src = faviconUrl;
+                img.alt = 'icon';
+
+                const a = document.createElement('a');
+                a.href = bookmark.url;
+                a.title = bookmark.title;
+                a.textContent = bookmark.title; // Lebih aman dan tidak butuh parsing HTML
+
+                li.appendChild(img);
+                li.appendChild(a);
 
                 // Klik area manapun di dalam list untuk membuka web
                 li.addEventListener('click', () => {
@@ -42,20 +53,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     chrome.tabs.create({ url: bookmark.url, active: true });
                 });
 
-                bookmarkList.appendChild(li);
+                fragment.appendChild(li);
+                addedCount++;
             }
         });
 
-        // Pesan jika tidak ada yang cocok dengan pencarian
-        if (bookmarkList.children.length === 0) {
+        // Tempelkan fragment ke DOM sekaligus (Sangat Cepat/Lightweight)
+        if (addedCount > 0) {
+            bookmarkList.appendChild(fragment);
+        } else {
+            // Pesan jika tidak ada yang cocok dengan pencarian
             bookmarkList.innerHTML = '<li style="color: #6c7086; justify-content: center; font-style: italic;">Tidak ada hasil ditemukan.</li>';
         }
     }
 
-    // Merekam ketikan di kolom pencarian (Real-time filtering)
+    // Merekam ketikan di kolom pencarian (Debounced)
+    let debounceTimer;
     searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.trim();
-        fetchAndRenderBookmarks(query);
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const query = e.target.value.trim();
+            fetchAndRenderBookmarks(query);
+        }, 150); // Menunda pencarian 150ms
     });
 
     // Panggil pertama kali untuk memuat bookmark terbaru saat popup terbuka
