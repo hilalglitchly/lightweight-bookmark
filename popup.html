@@ -9,8 +9,12 @@
 <body>
     <div class="container">
         <header>
-            <h2>Bookmarks</h2>
+            <div class="header-top">
+                <h2>Bookmarks</h2>
+                <button id="settingsBtn" class="icon-btn" title="Sematkan folder ini sebagai Halaman Utama">📌</button>
+            </div>
             <input type="text" id="searchInput" placeholder="Cari bookmark..." autofocus>
+            <div id="breadcrumb" class="breadcrumb"></div>
         </header>
         <main>
             <ul id="bookmarkList">

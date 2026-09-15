@@ -2,7 +2,8 @@
     /* Skema warna Dark Mode khas Brave Browser */
     --bg-color: #202124;
     --text-color: #e8eaed;
-    --accent-color: #fb542b; /* Brave Orange */
+    --accent-color: #0d59d4;
+    /* Brave Blue */
     --item-bg-hover: #3c4043;
     --border-color: #5f6368;
 }
@@ -13,7 +14,8 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
-    width: 350px; /* Ukuran popup pas tidak terlalu lebar */
+    width: 350px;
+    /* Ukuran popup pas tidak terlalu lebar */
     max-height: 500px;
     overflow-y: auto;
 }
@@ -77,7 +79,8 @@ li {
     gap: 10px;
 }
 
-li:hover, li.selected {
+li:hover,
+li.selected {
     background-color: var(--item-bg-hover);
 }
 
@@ -91,5 +94,82 @@ a {
     color: var(--text-color);
     text-decoration: none;
     font-size: 14px;
-    pointer-events: none; /* Biar klik jatuh di elemen <li> */
+    pointer-events: none;
+    /* Biar klik jatuh di elemen <li> */
+}
+
+/* Styling Khusus untuk Tombol Kembali & Folder */
+.back-btn {
+    background-color: rgba(251, 84, 43, 0.1); /* Sedikit nuansa oranye Brave */
+    margin-bottom: 5px;
+    border: 1px dashed var(--border-color);
+}
+.back-btn:hover, .back-btn.selected {
+    background-color: rgba(251, 84, 43, 0.2);
+}
+.folder-item a {
+    color: var(--text-color); 
+    font-weight: 600;
+}
+
+/* Header Flex Layout */
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.header-top h2 {
+    margin: 0;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s, transform 0.2s;
+    padding: 2px;
+}
+.icon-btn:hover {
+    opacity: 1;
+    transform: rotate(45deg);
+}
+
+/* Breadcrumb Styling */
+.breadcrumb {
+    font-size: 11px;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-top: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Empty State */
+.empty-state {
+    display: block;
+    text-align: center;
+    color: var(--text-color);
+    opacity: 0.7;
+    font-style: italic;
+    pointer-events: none;
+}
+
+/* 🌓 Auto Light Mode */
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg-color: #ffffff;
+        --text-color: #202124;
+        --item-bg-hover: #f1f3f4;
+        --border-color: #dadce0;
+        --accent-color: #fb542b; /* Brave Orange */
+    }
+    
+    .folder-item img {
+        filter: invert(0.8) sepia(1) saturate(5) hue-rotate(180deg); /* Menghitamkan icon SVG putih */
+    }
 }

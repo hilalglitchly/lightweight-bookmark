@@ -5,7 +5,8 @@
   "description": "A fast, simple, and lightweight bookmark manager.",
   "permissions": [
     "bookmarks",
-    "favicon"
+    "favicon",
+    "storage"
   ],
   "action": {
     "default_popup": "popup.html",
