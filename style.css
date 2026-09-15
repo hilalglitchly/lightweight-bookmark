@@ -173,3 +173,35 @@ a {
         filter: invert(0.8) sepia(1) saturate(5) hue-rotate(180deg); /* Menghitamkan icon SVG putih */
     }
 }
+
+/* Context Menu */
+.context-menu {
+    display: none;
+    position: absolute;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+    min-width: 140px;
+    padding: 4px 0;
+}
+
+.context-menu-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+    background-color: var(--item-bg-hover);
+}
+
+.context-menu-danger {
+    color: #f75555;
+}
+.context-menu-danger:hover {
+    background-color: rgba(247, 85, 85, 0.1);
+}

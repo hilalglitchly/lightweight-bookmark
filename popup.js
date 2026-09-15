@@ -4,6 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const breadcrumbDiv = document.getElementById('breadcrumb');
     const settingsBtn = document.getElementById('settingsBtn');
     
+    // Context Menu Elements
+    const contextMenu = document.getElementById('contextMenu');
+    const menuOpenNewTab = document.getElementById('menuOpenNewTab');
+    const menuDelete = document.getElementById('menuDelete');
+    let contextTarget = null; // { id, url }
+    
     let currentIndex = -1;
     let currentFolderId = '1'; // Default fallback
     let currentFolderName = 'Bookmarks bar';
@@ -32,6 +38,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 settingsBtn.innerText = originalText;
             }, 1000);
         });
+    });
+
+    // Sembunyikan context menu saat klik di manapun
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#contextMenu')) return;
+        contextMenu.style.display = 'none';
+    });
+
+    // Aksi menu klik kanan: Buka Tab Baru
+    menuOpenNewTab.addEventListener('click', () => {
+        if (contextTarget && contextTarget.url) {
+            chrome.tabs.create({ url: contextTarget.url, active: false });
+        }
+        contextMenu.style.display = 'none';
+    });
+
+    // Aksi menu klik kanan: Hapus
+    menuDelete.addEventListener('click', () => {
+        if (contextTarget && contextTarget.id) {
+            chrome.bookmarks.remove(contextTarget.id, () => {
+                // Refresh list
+                if (isSearching) {
+                    fetchAndRenderSearch(searchInput.value.trim());
+                } else {
+                    fetchAndRenderFolder(currentFolderId);
+                }
+            });
+        }
+        contextMenu.style.display = 'none';
     });
 
     function updateBreadcrumb() {
@@ -148,6 +183,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
             li.appendChild(img);
             li.appendChild(a);
+            
+            // Event Listener Klik Kanan (Context Menu)
+            li.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                contextTarget = { id: bookmark.id, url: bookmark.url };
+                
+                // Atur visibilitas menu "Buka di Tab Baru" (hanya untuk tautan)
+                menuOpenNewTab.style.display = bookmark.url ? 'block' : 'none';
+                
+                // Posisi kursor
+                let x = e.pageX;
+                let y = e.pageY;
+                
+                // Hindari keluar dari layar
+                contextMenu.style.display = 'block';
+                if (x + contextMenu.offsetWidth > document.body.offsetWidth) {
+                    x -= contextMenu.offsetWidth;
+                }
+                if (y + contextMenu.offsetHeight > document.body.offsetHeight) {
+                    y -= contextMenu.offsetHeight;
+                }
+                
+                contextMenu.style.left = `${x}px`;
+                contextMenu.style.top = `${y}px`;
+            });
+            
             fragment.appendChild(li);
             addedCount++;
         });
