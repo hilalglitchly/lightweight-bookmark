@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,23 +11,38 @@
         <header>
             <div class="header-top">
                 <h2>Bookmarks</h2>
-                <button id="settingsBtn" class="icon-btn" title="Sematkan folder ini sebagai Halaman Utama">📌</button>
+                <div class="header-actions">
+                    <button id="addBookmarkBtn" class="icon-btn" title="Bookmark current tab">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    </button>
+                    <button id="settingsBtn" class="icon-btn" title="Pin this folder as Home">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+                    </button>
+                </div>
             </div>
-            <input type="text" id="searchInput" placeholder="Cari bookmark..." autofocus>
+            <div class="search-wrapper">
+                <input type="text" id="searchInput" placeholder="Search bookmarks..." autofocus>
+            </div>
             <div id="breadcrumb" class="breadcrumb"></div>
         </header>
         <main>
             <ul id="bookmarkList">
-                <!-- Data bookmark akan dimasukkan ke sini melalui JavaScript -->
+                <!-- Bookmark data is injected here via JavaScript -->
             </ul>
         </main>
     </div>
 
     <!-- Context Menu -->
     <div id="contextMenu" class="context-menu">
-        <div class="context-menu-item" id="menuOpenNewTab">Buka di Tab Baru</div>
-        <div class="context-menu-item context-menu-danger" id="menuDelete">Hapus</div>
+        <div class="context-menu-item" id="menuOpenNewTab">Open in New Tab</div>
+        <div class="context-menu-item" id="menuOpenAll">Open All in New Tabs</div>
+        <div class="context-menu-item" id="menuRename">Rename</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item context-menu-danger" id="menuDelete">Delete</div>
     </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
 
     <script src="popup.js"></script>
 </body>
