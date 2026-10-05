@@ -325,7 +325,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 li.addEventListener('click', () => {
-                    chrome.tabs.create({ url: bookmark.url, active: true });
+                    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                        if (tabs[0]) {
+                            chrome.tabs.update(tabs[0].id, { url: bookmark.url });
+                        }
+                    });
                 });
 
                 // Middle-click to open in background
