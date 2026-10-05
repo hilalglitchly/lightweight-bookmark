@@ -5,10 +5,14 @@
   "description": "A fast, simple, and lightweight bookmark manager.",
   "permissions": [
     "bookmarks",
+    "contextMenus",
     "favicon",
     "storage",
     "tabs"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
