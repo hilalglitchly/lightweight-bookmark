@@ -7,33 +7,20 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
-// Handle context menu click
+// Handle context menu click — open folder picker popup
 chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === 'bookmark-tab' && tab) {
-        // Get the user's pinned folder, fallback to Bookmarks Bar ('1')
-        chrome.storage.local.get(['defaultFolderId'], (result) => {
-            const parentId = result.defaultFolderId || '1';
+        const params = new URLSearchParams({
+            title: tab.title || 'New Bookmark',
+            url: tab.url || ''
+        });
 
-            chrome.bookmarks.create({
-                parentId: parentId,
-                title: tab.title || 'New Bookmark',
-                url: tab.url
-            }, (created) => {
-                if (chrome.runtime.lastError) {
-                    console.error('Bookmark failed:', chrome.runtime.lastError.message);
-                    return;
-                }
-                // Get folder name for notification
-                chrome.bookmarks.get(parentId, (nodes) => {
-                    const folderName = nodes && nodes[0] ? nodes[0].title : 'Bookmarks';
-                    // Show a badge briefly to confirm
-                    chrome.action.setBadgeText({ text: '✓', tabId: tab.id });
-                    chrome.action.setBadgeBackgroundColor({ color: '#22c55e', tabId: tab.id });
-                    setTimeout(() => {
-                        chrome.action.setBadgeText({ text: '', tabId: tab.id });
-                    }, 2000);
-                });
-            });
+        chrome.windows.create({
+            url: `bookmark_save.html?${params.toString()}`,
+            type: 'popup',
+            width: 400,
+            height: 420,
+            focused: true
         });
     }
 });
