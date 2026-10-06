@@ -69,9 +69,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             console.error('Bookmark failed:', chrome.runtime.lastError.message);
             return;
         }
-        // Show green badge as confirmation
+        // Show badge as confirmation
         chrome.action.setBadgeText({ text: '✓', tabId: tab.id });
-        chrome.action.setBadgeBackgroundColor({ color: '#22c55e', tabId: tab.id });
+        chrome.action.setBadgeBackgroundColor({ color: '#6b6d6bff', tabId: tab.id });
         setTimeout(() => {
             chrome.action.setBadgeText({ text: '', tabId: tab.id });
         }, 2000);
