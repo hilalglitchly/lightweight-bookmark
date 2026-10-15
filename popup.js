@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let pinnedFolderId = null;
     let toastTimeout = null;
 
+    // Drag & Drop state
+    let draggedItem = null;
+    let draggedBookmarkId = null;
+    let dropIndicator = null;
+
     const PIN_OUTLINE = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>';
     const PIN_FILLED = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>';
 
@@ -300,9 +305,17 @@ document.addEventListener('DOMContentLoaded', () => {
             addedCount++;
         }
 
-        bookmarks.forEach(bookmark => {
+        bookmarks.forEach((bookmark, bIndex) => {
             const li = document.createElement('li');
             const a = document.createElement('a');
+
+            // Drag & Drop attributes (only in folder view, not search)
+            if (!isSearching) {
+                li.draggable = true;
+                li.dataset.bookmarkId = bookmark.id;
+                li.dataset.bookmarkIndex = bIndex;
+                setupDragEvents(li, bookmark);
+            }
             
             const displayName = bookmark.title || (bookmark.url ? bookmark.url : "Unnamed Folder");
             a.title = displayName;
@@ -468,4 +481,96 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // ====== Drag & Drop ======
+
+    function createDropIndicator() {
+        if (!dropIndicator) {
+            dropIndicator = document.createElement('div');
+            dropIndicator.className = 'drop-indicator';
+        }
+        return dropIndicator;
+    }
+
+    function setupDragEvents(li, bookmark) {
+        li.addEventListener('dragstart', (e) => {
+            draggedItem = li;
+            draggedBookmarkId = bookmark.id;
+            li.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', bookmark.id);
+        });
+
+        li.addEventListener('dragend', () => {
+            if (draggedItem) {
+                draggedItem.classList.remove('dragging');
+            }
+            draggedItem = null;
+            draggedBookmarkId = null;
+            removeDropIndicator();
+        });
+
+        li.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (!draggedItem || draggedItem === li) return;
+
+            const rect = li.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            const indicator = createDropIndicator();
+
+            if (e.clientY < midY) {
+                // Drop above this item
+                li.parentNode.insertBefore(indicator, li);
+            } else {
+                // Drop below this item
+                li.parentNode.insertBefore(indicator, li.nextSibling);
+            }
+        });
+
+        li.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (!draggedItem || draggedItem === li) return;
+
+            const rect = li.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            const dropAbove = e.clientY < midY;
+
+            // Calculate the target index
+            const allItems = [...bookmarkList.querySelectorAll('li[data-bookmark-id]')];
+            const targetIdx = allItems.indexOf(li);
+            let newIndex = dropAbove ? targetIdx : targetIdx + 1;
+
+            // Adjust if dragging from above the target
+            const dragIdx = allItems.indexOf(draggedItem);
+            if (dragIdx < newIndex) {
+                newIndex--;
+            }
+
+            // Move in Chrome bookmarks API
+            chrome.bookmarks.move(draggedBookmarkId, {
+                parentId: currentFolderId,
+                index: newIndex
+            }, () => {
+                if (chrome.runtime.lastError) {
+                    showToast('Move failed', 'error');
+                    return;
+                }
+                fetchAndRenderFolder(currentFolderId);
+            });
+
+            removeDropIndicator();
+        });
+    }
+
+    function removeDropIndicator() {
+        if (dropIndicator && dropIndicator.parentNode) {
+            dropIndicator.parentNode.removeChild(dropIndicator);
+        }
+    }
+
+    // Prevent default dragover on the list container
+    bookmarkList.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
 });

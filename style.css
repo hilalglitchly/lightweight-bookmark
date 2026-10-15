@@ -437,3 +437,37 @@ a {
     border-color: #f75555;
     color: #f75555;
 }
+
+/* Drag & Drop */
+li.dragging {
+    opacity: 0.35;
+    background-color: var(--item-bg-active);
+}
+
+li[draggable="true"] {
+    cursor: grab;
+}
+
+li[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.drop-indicator {
+    height: 2px;
+    background: var(--accent-color);
+    border-radius: 1px;
+    margin: 0 10px;
+    pointer-events: none;
+    position: relative;
+}
+
+.drop-indicator::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-color);
+}
