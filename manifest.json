@@ -3,6 +3,9 @@
   "name": "Lightweight Bookmark",
   "version": "1.0",
   "description": "A fast, simple, and lightweight bookmark manager.",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'"
+  },
   "permissions": [
     "bookmarks",
     "contextMenus",

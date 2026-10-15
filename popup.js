@@ -27,8 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggedBookmarkId = null;
     let dropIndicator = null;
 
-    const PIN_OUTLINE = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>';
-    const PIN_FILLED = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>';
+
 
     // Toast Notification helper
     function showToast(message, type = 'success') {
@@ -41,14 +40,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2200);
     }
 
-    function updatePinIcon() {
-        if (currentFolderId === pinnedFolderId) {
-            settingsBtn.innerHTML = PIN_FILLED;
-            settingsBtn.style.opacity = '1';
-        } else {
-            settingsBtn.innerHTML = PIN_OUTLINE;
-            settingsBtn.style.opacity = '';
+    // Security: URL validation — block dangerous protocols
+    function isSafeUrl(url) {
+        if (!url) return false;
+        try {
+            const parsed = new URL(url);
+            const allowed = ['http:', 'https:', 'ftp:', 'file:', 'chrome:', 'brave:', 'chrome-extension:', 'edge:'];
+            return allowed.includes(parsed.protocol);
+        } catch {
+            return false;
         }
+    }
+
+    // Security: Create SVG elements without innerHTML
+    function createSVGIcon(pathData, size = 16, fill = 'none', strokeFill = 'currentColor') {
+        const ns = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('xmlns', ns);
+        svg.setAttribute('width', String(size));
+        svg.setAttribute('height', String(size));
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', fill);
+        svg.setAttribute('stroke', strokeFill);
+        svg.setAttribute('stroke-width', '2');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+        if (Array.isArray(pathData)) {
+            pathData.forEach(d => {
+                const path = document.createElementNS(ns, 'path');
+                path.setAttribute('d', d);
+                svg.appendChild(path);
+            });
+        } else {
+            const path = document.createElementNS(ns, 'path');
+            path.setAttribute('d', pathData);
+            svg.appendChild(path);
+        }
+        return svg;
+    }
+
+    // SVG path data constants
+    const PIN_PATHS = ['M12 17v5', 'M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z'];
+    const CHEVRON_LEFT_PATH = 'm15 18-6-6 6-6';
+    const FOLDER_PATH = 'M22 19A2 2 0 0119 22H5a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3H19a2 2 0 012 2Z';
+
+    function updatePinIcon() {
+        const isPinned = currentFolderId === pinnedFolderId;
+        settingsBtn.textContent = '';
+        settingsBtn.appendChild(createSVGIcon(PIN_PATHS, 16, isPinned ? 'currentColor' : 'none'));
+        settingsBtn.style.opacity = isPinned ? '1' : '';
     }
 
     // Disable add button at root level (can't create bookmarks there)
@@ -89,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Context menu action: Open in New Tab
     menuOpenNewTab.addEventListener('click', () => {
-        if (contextTarget && contextTarget.url) {
+        if (contextTarget && contextTarget.url && isSafeUrl(contextTarget.url)) {
             chrome.tabs.create({ url: contextTarget.url, active: false });
         }
         contextMenu.style.display = 'none';
@@ -276,7 +316,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (showBack && !isSearching) {
             const li = document.createElement('li');
             li.className = 'back-btn';
-            li.innerHTML = '<span class="bookmark-icon" style="display: flex; align-items: center; justify-content: center;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></span><a style="font-weight: 600; color: var(--text-color);">Back</a>';
+            const backIcon = document.createElement('span');
+            backIcon.className = 'bookmark-icon';
+            backIcon.style.cssText = 'display:flex;align-items:center;justify-content:center';
+            backIcon.appendChild(createSVGIcon(CHEVRON_LEFT_PATH, 12));
+            const backLabel = document.createElement('a');
+            backLabel.style.cssText = 'font-weight:600;color:var(--text-color)';
+            backLabel.textContent = 'Back';
+            li.appendChild(backIcon);
+            li.appendChild(backLabel);
             
             li.addEventListener('click', () => {
                 if (folderStack.length > 0) {
@@ -338,6 +386,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 li.addEventListener('click', () => {
+                    if (!isSafeUrl(bookmark.url)) {
+                        showToast('Blocked: unsafe URL', 'error');
+                        return;
+                    }
                     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                         if (tabs[0]) {
                             chrome.tabs.update(tabs[0].id, { url: bookmark.url });
@@ -349,6 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.addEventListener('mousedown', (e) => {
                     if (e.button === 1) {
                         e.preventDefault();
+                        if (!isSafeUrl(bookmark.url)) return;
                         chrome.tabs.create({ url: bookmark.url, active: false });
                     }
                 });
@@ -359,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 iconEl.style.display = 'flex';
                 iconEl.style.alignItems = 'center';
                 iconEl.style.justifyContent = 'center';
-                iconEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19A2 2 0 0119 22H5a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3H19a2 2 0 012 2Z"/></svg>';
+                iconEl.appendChild(createSVGIcon(FOLDER_PATH, 16));
                 li.classList.add('folder-item');
                 a.style.fontWeight = "600";
 
@@ -410,11 +463,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (addedCount > 0) {
             bookmarkList.appendChild(fragment);
         } else {
+            const emptyLi = document.createElement('li');
+            emptyLi.className = 'empty-state';
             if (isSearching) {
-                bookmarkList.innerHTML = `<li class="empty-state">No results for '${searchQuery}'.<br><small style="margin-top: 4px; display: block; opacity: 0.7;">Press ESC to cancel.</small></li>`;
+                emptyLi.textContent = `No results for '${searchQuery}'.`;
+                const hint = document.createElement('small');
+                hint.style.cssText = 'margin-top:4px;display:block;opacity:0.7';
+                hint.textContent = 'Press ESC to cancel.';
+                emptyLi.appendChild(document.createElement('br'));
+                emptyLi.appendChild(hint);
             } else {
-                bookmarkList.innerHTML = '<li class="empty-state">This folder is empty.</li>';
+                emptyLi.textContent = 'This folder is empty.';
             }
+            bookmarkList.appendChild(emptyLi);
         }
     }
 
