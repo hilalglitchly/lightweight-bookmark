@@ -4,15 +4,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const breadcrumbDiv = document.getElementById('breadcrumb');
     const settingsBtn = document.getElementById('settingsBtn');
     const addBookmarkBtn = document.getElementById('addBookmarkBtn');
+    const newFolderBtn = document.getElementById('newFolderBtn');
     const toast = document.getElementById('toast');
     
     // Context Menu Elements
     const contextMenu = document.getElementById('contextMenu');
     const menuOpenNewTab = document.getElementById('menuOpenNewTab');
     const menuOpenAll = document.getElementById('menuOpenAll');
+    const menuNewFolder = document.getElementById('menuNewFolder');
     const menuRename = document.getElementById('menuRename');
     const menuDelete = document.getElementById('menuDelete');
-    let contextTarget = null; // { id, url, isFolder, liElement }
+    let contextTarget = null; // { id, url, isFolder, liElement, title }
+
+    // Modal Elements - Delete Confirmation
+    const deleteModal = document.getElementById('deleteModal');
+    const deleteModalTitle = document.getElementById('deleteModalTitle');
+    const deleteModalDesc = document.getElementById('deleteModalDesc');
+    const deleteModalCancel = document.getElementById('deleteModalCancel');
+    const deleteModalConfirm = document.getElementById('deleteModalConfirm');
+    let pendingDeleteTarget = null; // { id, title, isFolder }
+
+    // Modal Elements - New Folder
+    const newFolderModal = document.getElementById('newFolderModal');
+    const newFolderLocation = document.getElementById('newFolderLocation');
+    const newFolderInput = document.getElementById('newFolderInput');
+    const newFolderCancel = document.getElementById('newFolderCancel');
+    const newFolderConfirm = document.getElementById('newFolderConfirm');
+    let newFolderParentId = null;
+    let newFolderParentName = '';
     
     let currentIndex = -1;
     let currentFolderId = '1'; // Default fallback
@@ -91,10 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsBtn.style.opacity = isPinned ? '1' : '';
     }
 
-    // Disable add button at root level (can't create bookmarks there)
+    // Disable add/folder buttons at root level (can't create items there)
     function updateAddButton() {
         const isRoot = currentFolderId === '0';
         addBookmarkBtn.style.display = isRoot ? 'none' : '';
+        if (newFolderBtn) {
+            newFolderBtn.style.display = isRoot ? 'none' : '';
+        }
     }
 
     // Load default folder from storage
@@ -135,18 +157,129 @@ document.addEventListener('DOMContentLoaded', () => {
         contextMenu.style.display = 'none';
     });
 
-    // Context menu action: Delete
-    menuDelete.addEventListener('click', () => {
-        if (contextTarget && contextTarget.id) {
-            const removeFunc = contextTarget.isFolder ? chrome.bookmarks.removeTree : chrome.bookmarks.remove;
-            removeFunc(contextTarget.id, () => {
-                showToast('Deleted');
+    // Modal Handlers: Delete Confirmation
+    function openDeleteModal(target) {
+        if (!target || !target.id) return;
+        pendingDeleteTarget = target;
+        if (target.isFolder) {
+            deleteModalTitle.textContent = 'Delete Folder?';
+            deleteModalDesc.textContent = `Delete "${target.title || 'this folder'}" and all its bookmarks? This action cannot be undone.`;
+        } else {
+            deleteModalTitle.textContent = 'Delete Bookmark?';
+            deleteModalDesc.textContent = `Are you sure you want to delete "${target.title || 'this bookmark'}"?`;
+        }
+        deleteModal.style.display = 'flex';
+        setTimeout(() => {
+            deleteModalCancel.focus();
+        }, 50);
+    }
+
+    function closeDeleteModal() {
+        deleteModal.style.display = 'none';
+        pendingDeleteTarget = null;
+    }
+
+    deleteModalConfirm.addEventListener('click', () => {
+        if (pendingDeleteTarget && pendingDeleteTarget.id) {
+            const target = pendingDeleteTarget;
+            const removeFunc = target.isFolder ? chrome.bookmarks.removeTree : chrome.bookmarks.remove;
+            removeFunc(target.id, () => {
+                if (chrome.runtime.lastError) {
+                    showToast(`Failed: ${chrome.runtime.lastError.message}`, 'error');
+                    closeDeleteModal();
+                    return;
+                }
+                showToast(`Deleted "${target.title || 'item'}"`);
+                closeDeleteModal();
                 if (isSearching) {
                     fetchAndRenderSearch(searchInput.value.trim());
                 } else {
                     fetchAndRenderFolder(currentFolderId);
                 }
             });
+        }
+    });
+
+    deleteModalCancel.addEventListener('click', closeDeleteModal);
+    deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) closeDeleteModal();
+    });
+
+    // Modal Handlers: New Folder
+    function openNewFolderModal(parentId, parentName) {
+        newFolderParentId = (parentId === '0' || !parentId) ? '1' : parentId;
+        newFolderParentName = parentName || (newFolderParentId === '1' ? 'Bookmarks bar' : currentFolderName);
+        newFolderLocation.textContent = `In "${newFolderParentName}"`;
+        newFolderInput.value = 'New Folder';
+        newFolderModal.style.display = 'flex';
+        setTimeout(() => {
+            newFolderInput.focus();
+            newFolderInput.select();
+        }, 50);
+    }
+
+    function closeNewFolderModal() {
+        newFolderModal.style.display = 'none';
+        newFolderParentId = null;
+        newFolderInput.value = '';
+    }
+
+    newFolderConfirm.addEventListener('click', () => {
+        const name = newFolderInput.value.trim();
+        if (!name) {
+            showToast('Please enter a folder name', 'error');
+            newFolderInput.focus();
+            return;
+        }
+        const parentId = newFolderParentId || currentFolderId || '1';
+        chrome.bookmarks.create({
+            parentId: parentId,
+            title: name
+        }, (created) => {
+            if (chrome.runtime.lastError) {
+                showToast(`Failed: ${chrome.runtime.lastError.message}`, 'error');
+                return;
+            }
+            closeNewFolderModal();
+            showToast(`Created folder "${name}"`);
+            if (isSearching) {
+                searchInput.value = '';
+                isSearching = false;
+            }
+            fetchAndRenderFolder(currentFolderId);
+        });
+    });
+
+    newFolderCancel.addEventListener('click', closeNewFolderModal);
+    newFolderModal.addEventListener('click', (e) => {
+        if (e.target === newFolderModal) closeNewFolderModal();
+    });
+    newFolderInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            newFolderConfirm.click();
+        }
+    });
+
+    // Header New Folder button
+    if (newFolderBtn) {
+        newFolderBtn.addEventListener('click', () => {
+            openNewFolderModal(currentFolderId, currentFolderName);
+        });
+    }
+
+    // Context menu action: New Subfolder (for folders)
+    menuNewFolder.addEventListener('click', () => {
+        if (contextTarget && contextTarget.id && contextTarget.isFolder) {
+            openNewFolderModal(contextTarget.id, contextTarget.title);
+        }
+        contextMenu.style.display = 'none';
+    });
+
+    // Context menu action: Delete
+    menuDelete.addEventListener('click', () => {
+        if (contextTarget && contextTarget.id) {
+            openDeleteModal(contextTarget);
         }
         contextMenu.style.display = 'none';
     });
@@ -434,10 +567,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Right-click context menu
             li.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
-                contextTarget = { id: bookmark.id, url: bookmark.url, isFolder: !bookmark.url, liElement: li };
+                contextTarget = { id: bookmark.id, url: bookmark.url, isFolder: !bookmark.url, liElement: li, title: displayName };
                 
                 menuOpenNewTab.style.display = bookmark.url ? 'block' : 'none';
                 menuOpenAll.style.display = !bookmark.url ? 'block' : 'none';
+                menuNewFolder.style.display = !bookmark.url ? 'block' : 'none';
                 menuRename.style.display = 'block';
                 menuDelete.style.display = 'block';
                 
@@ -496,6 +630,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
+            if (deleteModal.style.display !== 'none') {
+                closeDeleteModal();
+                return;
+            }
+            if (newFolderModal.style.display !== 'none') {
+                closeNewFolderModal();
+                return;
+            }
             if (contextMenu.style.display === 'block') {
                 contextMenu.style.display = 'none';
                 return;
@@ -509,8 +651,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // If a modal is open, don't handle list navigation
+        if (deleteModal.style.display !== 'none' || newFolderModal.style.display !== 'none') return;
+
+        // Shortcut: Alt+N or Ctrl+Shift+N to create new folder
+        if ((e.altKey && e.key.toLowerCase() === 'n') || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'n')) {
+            e.preventDefault();
+            openNewFolderModal(currentFolderId, currentFolderName);
+            return;
+        }
+
         const items = bookmarkList.querySelectorAll('li');
         if (items.length === 0 || items[0].classList.contains('empty-state')) return;
+
+        // Shortcut: Delete or Backspace key to delete selected bookmark/folder
+        const isInputFocused = document.activeElement === searchInput || (document.activeElement && document.activeElement.tagName === 'INPUT');
+        if ((e.key === 'Delete' || e.key === 'Backspace') && !isInputFocused) {
+            if (currentIndex >= 0 && currentIndex < items.length) {
+                const selectedLi = items[currentIndex];
+                if (selectedLi && !selectedLi.classList.contains('back-btn')) {
+                    const bookmarkId = selectedLi.dataset.bookmarkId;
+                    if (bookmarkId) {
+                        e.preventDefault();
+                        const anchor = selectedLi.querySelector('a');
+                        const title = anchor ? anchor.textContent : 'item';
+                        const isFolder = selectedLi.classList.contains('folder-item');
+                        openDeleteModal({ id: bookmarkId, title, isFolder });
+                        return;
+                    }
+                }
+            }
+        }
 
         if (e.key === 'ArrowDown') {
             e.preventDefault();

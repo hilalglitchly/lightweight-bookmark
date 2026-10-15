@@ -29,5 +29,14 @@
       "16": "icons/icon16.png",
       "32": "icons/icon32.png"
     }
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+B",
+        "mac": "Alt+B"
+      },
+      "description": "Open Lightweight Bookmark"
+    }
   }
 }

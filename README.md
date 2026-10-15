@@ -3,17 +3,33 @@
 Sebuah ekstensi peramban (Chrome/Brave Extension - Manifest V3) yang sangat ringan, super cepat, dan dirancang khusus untuk memenuhi kebutuhan *power user* dengan antarmuka yang menyatu sempurna dengan *Brave Browser Dark Theme*.
 
 ## ✨ Fitur Utama (Features)
-- 🚀 **Performa Ekstra Cepat**: Direkayasa menggunakan eksekusi Vanilla JS murni.
-- ⌨️ **Navigasi Keyboard**: Cari dan buka *bookmark* tanpa perlu menyentuh *mouse* (menggunakan `ArrowUp`, `ArrowDown`, dan `Enter`).
-- ⚡ **Pencarian Ter-Debounce (Debounced Search)**: Meminimalisir lonjakan penggunaan CPU saat Anda mengetik cepat.
-- 🖼️ **Favicon Asli**: Secara dinamis menarik dan menampilkan logo/favicon asli dari situs web yang Anda simpan (melalui API internal Chrome).
-- 🧠 **Optimasi Memori (DocumentFragment)**: Merender ratusan daftar *bookmark* ke layar hanya dalam **satu siklus DOM** untuk menghindari *lag*/*stutter*.
-- 🎨 **Brave-Aesthetic**: Tema gelap (Dark Mode) yang sepenuhnya dioptimalkan dan diselaraskan dengan palet warna asli peramban Brave (Brave Orange).
+- 🚀 **Performa Ekstra Cepat**: Direkayasa menggunakan Vanilla JS murni tanpa framework, ringan dan hemat memori.
+- ⌨️ **Keyboard Shortcut Global**: Buka ekstensi kapan saja dengan shortcut default `Alt + B` (dapat dikustomisasi di `brave://extensions/shortcuts` atau `chrome://extensions/shortcuts`).
+- 📁 **Buat Folder Baru**: Tambah folder dengan mudah lewat tombol header (`Alt + N`) atau menu klik kanan *New Subfolder*.
+- 🛡️ **Konfirmasi Hapus Aman**: Dialog konfirmasi modern mencegah penghapusan bookmark atau folder berisi data penting secara tidak sengaja.
+- 🤏 **Drag & Drop Reordering**: Tahan dan geser bookmark untuk mengatur urutan posisi sesuai keinginan dengan indikator visual yang presisi.
+- ⚡ **Pencarian Ter-Debounce**: Pencarian instan dan responsif tanpa lag CPU saat mengetik.
+- 📌 **Pin Folder Beranda**: Sematkan folder favorit sebagai tampilan awal default setiap kali popup dibuka.
+- 🖼️ **Favicon Asli**: Mengambil favicon resmi situs secara dinamis melalui Chromium Internal Favicon API.
+- 🔒 **Keamanan Ketat**: Dilengkapi Content Security Policy (CSP), validasi skema URL yang aman, serta bebas dari `innerHTML`.
+- 🎨 **Brave/Chromium Aesthetic**: Tema gelap elegan dengan efek glassmorphism, animasi halus, dan micro-interactions yang memanjakan mata.
+
+## ⌨️ Daftar Pintasan Keyboard (Keyboard Shortcuts)
+
+| Shortcut | Aksi |
+|---|---|
+| `Alt + B` | Buka / Tutup popup ekstensi dari web mana saja |
+| `Alt + N` / `Ctrl + Shift + N` | Buat folder baru (saat popup terbuka) |
+| `ArrowUp` / `ArrowDown` | Navigasi antar bookmark |
+| `Enter` | Buka bookmark yang dipilih / Konfirmasi dialog |
+| `ArrowLeft` | Kembali ke folder sebelumnya (Back) |
+| `Delete` / `Backspace` | Hapus bookmark/folder yang sedang dipilih (dengan konfirmasi) |
+| `Escape` | Tutup dialog modal / Batal pencarian / Tutup context menu |
 
 ## 🛠️ Instalasi (*Local Development*)
 Karena ekstensi ini masih dalam tahap pengembangan, Anda dapat menginstalnya secara manual di peramban berbasis Chromium (Chrome, Brave, Edge):
 
-1. Unduh atau *clone* *repository* ini ke komputer Anda.
+1. Unduh atau *clone* *repository* ini ke komputer Anda:
    ```bash
    git clone https://github.com/hilalglitchly/lightweight-bookmark.git
    ```
@@ -21,12 +37,12 @@ Karena ekstensi ini masih dalam tahap pengembangan, Anda dapat menginstalnya sec
 3. Nyalakan **"Developer mode"** (Mode Pengembang) di sudut kanan atas.
 4. Klik tombol **"Load unpacked"** (Muat yang belum dibongkar) yang muncul di kiri atas.
 5. Pilih folder tempat Anda menyimpan *repository* ini.
-6. Selesai! Klik ikon "Puzzle" di sudut kanan atas peramban dan sematkan (Pin) ekstensi ini agar mudah diakses.
+6. Selesai! Anda dapat langsung menekan `Alt + B` untuk membuka ekstensi!
 
 ## 💻 Teknologi yang Digunakan
-- **HTML5** & **CSS3** (Tanpa Framework)
-- **Vanilla JavaScript** (ES6+)
-- **Chrome Extension API** (Manifest V3)
+- **HTML5** & **CSS3** (Modern Vanilla CSS & Glassmorphism)
+- **Vanilla JavaScript** (ES6+, DocumentFragment, Zero Dependencies)
+- **Chrome Extensions API** (Manifest V3)
 
 ---
 *Dibuat untuk keperluan pembelajaran dan portofolio.*
